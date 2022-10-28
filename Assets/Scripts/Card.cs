@@ -10,8 +10,10 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(KMSelectable))]
 public class Card : MonoBehaviour
 {
+    [RummageNoRename]
     [SerializeField]
     private TextMesh _numberText;
+    [RummageNoRename]
     [SerializeField]
     private Material _cursorMaterial;
 
@@ -110,6 +112,8 @@ public class Card : MonoBehaviour
         return _inputManagerType.GetProperty("SelectableManager", ReflectionHelper.Flags).GetValue(FindObjectOfType(_inputManagerType), new object[0]);
     }
 
+    [RummageNoRename]
+    [RummageNoRemove]
     private void OnDestroy()
     {
         if(Held == this)
@@ -192,6 +196,7 @@ public class Card : MonoBehaviour
 #endif
     }
 
+    [RummageNoRename]
     private static bool InteractPrefix(object __instance)
     {
         DebugLog("IFix");
@@ -207,6 +212,7 @@ public class Card : MonoBehaviour
         return _override != 0;
     }
 
+    [RummageNoRename]
     private static bool SelectPrefix(object newSelectable)
     {
         DebugLog("SFix {0}", newSelectable);
@@ -220,12 +226,14 @@ public class Card : MonoBehaviour
         return cursel.transform.root.GetComponentInChildren<KeyCardAcceptor>() != null;
     }
 
+    [RummageNoRename]
     private static void InteractPostfix()
     {
         if(_override != 0)
             _override -= 1;
     }
 
+    [RummageNoRename]
     private static bool CancelPrefix()
     {
         if(_override != 0 || Held == null)
@@ -236,6 +244,7 @@ public class Card : MonoBehaviour
         return false;
     }
 
+    [RummageNoRename]
     private static bool CursorPrefix(object __instance, bool ___UseHardwareCursor, ref int ___currentMode)
     {
         if(Held == null)
@@ -256,6 +265,7 @@ public class Card : MonoBehaviour
         return false;
     }
 
+    [RummageNoRename]
     private static void DebugLog(string str, params object[] args)
     {
         //Debug.LogFormat(str, args);

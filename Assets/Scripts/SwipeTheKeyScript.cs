@@ -7,14 +7,19 @@ using Random = UnityEngine.Random;
 
 public class SwipeTheKeyScript : MonoBehaviour
 {
+    [RummageNoRename]
     [SerializeField]
     private CardFolder _folder;
+    [RummageNoRename]
     [SerializeField]
     private Material[] _lightMats;
+    [RummageNoRename]
     [SerializeField]
     private Renderer _led;
+    [RummageNoRename]
     [SerializeField]
     private Texture[] _symbols;
+    [RummageNoRename]
     [SerializeField]
     private Renderer _symbol;
 
@@ -24,6 +29,8 @@ public class SwipeTheKeyScript : MonoBehaviour
 
     private int _symbolIx;
 
+    [RummageNoRename]
+    [RummageNoRemove]
     private void Start()
     {
         EnsureFolder();
@@ -84,10 +91,12 @@ public class SwipeTheKeyScript : MonoBehaviour
         int order = sn.First() > sn.Last() ? 1 : -1;
 
         Card correct = CardFolder.Instance.GetAvailableCards()
-            .OrderByDescending(c => {
+            .OrderByDescending(c =>
+            {
                 IEnumerable<char> chr = c.Number.Where(ch => "0123456789".Contains(ch));
                 int i = int.Parse(chr.Skip(_symbolIx % 8).Concat(chr.Take(_symbolIx % 8)).Join(""));
-                return order * i; })
+                return order * i;
+            })
             .First();
 
         if(correct == Card.Held)
@@ -102,8 +111,6 @@ public class SwipeTheKeyScript : MonoBehaviour
             return;
 
         _led.material = _lightMats[1];
-        GetComponentInChildren<KeyCardAcceptor>().OnCollide -= CardCollide;
-        GetComponentInChildren<KeyCardAcceptor>().Active = false; ;
         _unSolved = false;
 
         Log("Correct card scanned; Module solved.");
@@ -130,7 +137,8 @@ public class SwipeTheKeyScript : MonoBehaviour
     {
         _led.material = _lightMats[2];
         yield return new WaitForSeconds(1f);
-        _led.material = _lightMats[0];
+        if(_unSolved)
+            _led.material = _lightMats[0];
     }
 
     private void EnsureFolder()

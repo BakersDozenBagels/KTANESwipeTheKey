@@ -6,8 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(KMSelectable), typeof(KMHoldable), typeof(Animator))]
 public class CardFolder : MonoBehaviour
 {
+    [RummageNoRename]
     [SerializeField]
     private Transform[] _slots;
+    [RummageNoRename]
     [SerializeField]
     private Card _cardPerfab;
 
@@ -24,6 +26,8 @@ public class CardFolder : MonoBehaviour
         return _cards;
     }
 
+    [RummageNoRename]
+    [RummageNoRemove]
     private void Awake()
     {
         if(Instance == null)
@@ -35,6 +39,8 @@ public class CardFolder : MonoBehaviour
         }
     }
 
+    [RummageNoRename]
+    [RummageNoRemove]
     private void Start()
     {
         KMSelectable self = GetComponent<KMSelectable>();
@@ -61,6 +67,8 @@ public class CardFolder : MonoBehaviour
         fht.SetField<Action>("OnLetGo", fh, () => { GetComponent<Animator>().SetBool("Open", false); if(letGo != null) letGo(); });
     }
 
+    [RummageNoRename]
+    [RummageNoRemove]
     private void OnDestroy()
     {
         if(Instance == this)

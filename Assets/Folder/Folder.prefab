@@ -612,7 +612,7 @@ MonoBehaviour:
   m_Script: {fileID: -1202335313, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetPosition: {x: 0, y: 1.25, z: -1.25}
+  targetPosition: {x: 0, y: 1.25, z: -1.45}
   targetRotation: {x: 13.5, y: 0, z: 0}
   HoldableAvailability: 3
 --- !u!114 &114270368936571832
