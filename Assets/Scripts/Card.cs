@@ -10,12 +10,12 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(KMSelectable))]
 public class Card : MonoBehaviour
 {
-    [RummageNoRename]
     [SerializeField]
     private TextMesh _numberText;
-    [RummageNoRename]
     [SerializeField]
     private Material _cursorMaterial;
+
+    public static bool TPActive = false;
 
     private string _number;
     public string Number
@@ -58,7 +58,7 @@ public class Card : MonoBehaviour
     }
 
     private Transform _originalParent;
-    private Coroutine _scan;
+    internal Coroutine _scan;
 
     public void Init()
     {
@@ -74,7 +74,7 @@ public class Card : MonoBehaviour
         ShowVisuals(true);
     }
 
-    private void Hold()
+    internal void Hold()
     {
         if(Held != null)
             throw new DuplicateException("Attempted to hold a Card while another is Held.");
@@ -87,10 +87,11 @@ public class Card : MonoBehaviour
 
         ShowVisuals(false);
 
-        _scan = StartCoroutine(MouseScan());
+        if(!TPActive)
+            _scan = StartCoroutine(MouseScan());
     }
 
-    private void LetGo()
+    internal void LetGo()
     {
         if(Held != this)
             throw new InvalidOperationException("Attempted to let go of a Card not being held.");
@@ -112,8 +113,6 @@ public class Card : MonoBehaviour
         return _inputManagerType.GetProperty("SelectableManager", ReflectionHelper.Flags).GetValue(FindObjectOfType(_inputManagerType), new object[0]);
     }
 
-    [RummageNoRename]
-    [RummageNoRemove]
     private void OnDestroy()
     {
         if(Held == this)
@@ -143,13 +142,13 @@ public class Card : MonoBehaviour
             transform.position = hit.point;
             transform.localEulerAngles = new Vector3(-90f, 180f, 0f);
             transform.localScale = Vector3.one * 50;
-            hit.collider.GetComponent<KeyCardAcceptor>().Collission(transform);
+            hit.collider.GetComponent<KeyCardAcceptor>().Collisssssssssssssssssion(transform);
 
             yield return null;
         }
     }
 
-    private void ShowVisuals(bool on)
+    internal void ShowVisuals(bool on)
     {
         foreach(Renderer r in GetComponentsInChildren<Renderer>())
             r.enabled = on;
@@ -196,11 +195,10 @@ public class Card : MonoBehaviour
 #endif
     }
 
-    [RummageNoRename]
     private static bool InteractPrefix(object __instance)
     {
         DebugLog("IFix");
-        if(Held == null)
+        if(Held == null || TPActive)
             return true;
 
         if(_lastSelected != null && _lastSelected.GetType().Field<bool>("IsPassThrough", _lastSelected))
@@ -212,11 +210,10 @@ public class Card : MonoBehaviour
         return _override != 0;
     }
 
-    [RummageNoRename]
     private static bool SelectPrefix(object newSelectable)
     {
         DebugLog("SFix {0}", newSelectable);
-        if(Held == null)
+        if(Held == null || TPActive)
             return true;
 
         _lastSelected = newSelectable;
@@ -226,17 +223,18 @@ public class Card : MonoBehaviour
         return cursel.transform.root.GetComponentInChildren<KeyCardAcceptor>() != null;
     }
 
-    [RummageNoRename]
     private static void InteractPostfix()
     {
+        if(TPActive)
+            return;
+
         if(_override != 0)
             _override -= 1;
     }
 
-    [RummageNoRename]
     private static bool CancelPrefix()
     {
-        if(_override != 0 || Held == null)
+        if(_override != 0 || Held == null || TPActive)
             return true;
 
         Held.LetGo();
@@ -244,10 +242,9 @@ public class Card : MonoBehaviour
         return false;
     }
 
-    [RummageNoRename]
     private static bool CursorPrefix(object __instance, bool ___UseHardwareCursor, ref int ___currentMode)
     {
-        if(Held == null)
+        if(Held == null || TPActive)
             return true;
 
         if(___UseHardwareCursor)
@@ -265,7 +262,6 @@ public class Card : MonoBehaviour
         return false;
     }
 
-    [RummageNoRename]
     private static void DebugLog(string str, params object[] args)
     {
         //Debug.LogFormat(str, args);

@@ -23,7 +23,7 @@ public static class ReflectionHelper
         });
     }
 
-    public static MethodInfo Method([RummageAssumeTypeSafe]this Type t, string name)
+    public static MethodInfo Method(this Type t, string name)
     {
         return t.GetMethod(name, Flags);
     }

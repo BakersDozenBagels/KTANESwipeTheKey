@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 [RequireComponent(typeof(KMSelectable), typeof(KMHoldable), typeof(Animator))]
 public class CardFolder : MonoBehaviour
 {
-    [RummageNoRename]
     [SerializeField]
     private Transform[] _slots;
-    [RummageNoRename]
     [SerializeField]
     private Card _cardPerfab;
+
+    private KMSelectable[] _children;
 
     public static CardFolder Instance
     {
@@ -26,8 +28,6 @@ public class CardFolder : MonoBehaviour
         return _cards;
     }
 
-    [RummageNoRename]
-    [RummageNoRemove]
     private void Awake()
     {
         if(Instance == null)
@@ -39,8 +39,6 @@ public class CardFolder : MonoBehaviour
         }
     }
 
-    [RummageNoRename]
-    [RummageNoRemove]
     private void Start()
     {
         KMSelectable self = GetComponent<KMSelectable>();
@@ -53,7 +51,7 @@ public class CardFolder : MonoBehaviour
             children.Last().Parent = self;
             _cards.Add(c);
         }
-        self.Children = children.ToArray();
+        _children = self.Children = children.ToArray();
         self.UpdateChildrenProperly();
 
         Debug.Log("[Swipe The Key] Available card numbers are: " + _cards.Select(c => c.Number).Join(" "));
@@ -67,14 +65,37 @@ public class CardFolder : MonoBehaviour
         fht.SetField<Action>("OnLetGo", fh, () => { GetComponent<Animator>().SetBool("Open", false); if(letGo != null) letGo(); });
     }
 
-    [RummageNoRename]
-    [RummageNoRemove]
     private void OnDestroy()
     {
         if(Instance == this)
         {
             Debug.Log("[Swipe The Key] CardFolder destroyed. Card numbers are reset.");
             Instance = null;
+        }
+    }
+
+#pragma warning disable 414
+    private const string TwitchHelpMessage = @"Use ""!{0} grab 1"" to grab the first card. Use ""!{0} grab 0"" to drop whatever card you're holding.";
+#pragma warning restore 414
+
+    private IEnumerator ProcessTwitchCommand(string command)
+    {
+        Card.TPActive = true;
+        command = command.Trim().ToLowerInvariant();
+
+        Match m;
+        if((m = Regex.Match(command, "grab ([0-6])")).Success)
+        {
+            int v = int.Parse(m.Groups[1].Value);
+            if(v == 0 && Card.Held!=null)
+            {
+                yield return null;
+                Card.Held.LetGo();
+                yield break;
+            }
+
+            if(v != 0 && Card.Held == null)
+                yield return new KMSelectable[] { _children[v - 1] };
         }
     }
 }

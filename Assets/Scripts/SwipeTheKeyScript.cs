@@ -7,19 +7,14 @@ using Random = UnityEngine.Random;
 
 public class SwipeTheKeyScript : MonoBehaviour
 {
-    [RummageNoRename]
     [SerializeField]
     private CardFolder _folder;
-    [RummageNoRename]
     [SerializeField]
     private Material[] _lightMats;
-    [RummageNoRename]
     [SerializeField]
     private Renderer _led;
-    [RummageNoRename]
     [SerializeField]
     private Texture[] _symbols;
-    [RummageNoRename]
     [SerializeField]
     private Renderer _symbol;
 
@@ -29,11 +24,9 @@ public class SwipeTheKeyScript : MonoBehaviour
 
     private int _symbolIx;
 
-    [RummageNoRename]
-    [RummageNoRemove]
     private void Start()
     {
-        EnsureFolder();
+        EnsureFolder(_folder);
 
         GetComponent<KMSelectable>().OnFocus += () => { GetComponentInChildren<KeyCardAcceptor>().Active = _unSolved; };
         GetComponent<KMSelectable>().OnDefocus += () => { GetComponentInChildren<KeyCardAcceptor>().Active = false; };
@@ -141,7 +134,7 @@ public class SwipeTheKeyScript : MonoBehaviour
             _led.material = _lightMats[0];
     }
 
-    private void EnsureFolder()
+    internal static void EnsureFolder(CardFolder folder)
     {
         if(CardFolder.Instance != null)
             return;
@@ -150,7 +143,7 @@ public class SwipeTheKeyScript : MonoBehaviour
         Transform[] modholdables = FindObjectsOfType(ReflectionHelper.FindTypeInGame("ModHoldable")).Cast<MonoBehaviour>().Select(m => m.transform).ToArray();
         IList spawns = room.GetType().Field<IList>("HoldableSpawnPoints", room);
         MonoBehaviour hsp = spawns.Cast<MonoBehaviour>().First(hspt => !modholdables.Any(tr => (tr.position - hspt.transform.position).magnitude < 0.01f));
-        GameObject mho = Instantiate(_folder.gameObject, hsp.transform.position, hsp.transform.rotation);
+        GameObject mho = Instantiate(folder.gameObject, hsp.transform.position, hsp.transform.rotation);
         Type mht = ReflectionHelper.FindTypeInGame("ModHoldable");
         Component mh;
 
@@ -171,5 +164,67 @@ public class SwipeTheKeyScript : MonoBehaviour
 
         object arr = Array.CreateInstance(ReflectionHelper.FindTypeInGame("Assets.Scripts.Input.FaceSelectable"), 0);
         mht.SetField("Faces", mh, arr);
+    }
+
+#pragma warning disable 414
+    private const string TwitchHelpMessage = @"!{0} swipe up | !{0} swipe down | !folder help";
+#pragma warning restore 414
+
+    private IEnumerator ProcessTwitchCommand(string command)
+    {
+        Card.TPActive = true;
+
+        if(Card.Held == null)
+        {
+            yield return "sendtochaterror You're not holding a card!";
+            yield break;
+        }
+
+        command = command.Trim().ToLowerInvariant();
+        float mult;
+        if(command == "swipe up")
+            mult = 8f;
+        else if(command == "swipe down")
+            mult = -8f;
+        else
+            yield break;
+
+        yield return null;
+
+        StartCoroutine(Swipe(mult));
+        yield return new WaitForSeconds(.5f);
+    }
+
+    private IEnumerator Swipe(float mult)
+    {
+
+        if(Card.Held._scan != null)
+            Card.Held.StopCoroutine(Card.Held._scan);
+        Card.Held.ShowVisuals(true);
+        Card.Held.transform.parent = GetComponentInChildren<KeyCardAcceptor>().transform;
+        Card.Held.transform.localEulerAngles = new Vector3(-90f, 180f, 0f);
+        Card.Held.transform.localScale = Vector3.one * 50;
+        Vector3 point;
+        float t = Time.time;
+        while(Time.time - t < .5f)
+        {
+            point = new Vector3(-0.5f, 0f, (Time.time - t - 0.25f) * mult);
+
+            Card.Held.transform.localPosition = point;
+            CardCollide(Card.Held.transform);
+            yield return null;
+        }
+        Card.Held.ShowVisuals(false);
+    }
+
+    private IEnumerator TwitchHandleForcedSolve()
+    {
+        Card.TPActive = true;
+
+        Log("Force solved.");
+
+        GetComponent<KMAudio>().PlaySoundAtTransform("Beep", transform);
+        Solve();
+        yield break;
     }
 }

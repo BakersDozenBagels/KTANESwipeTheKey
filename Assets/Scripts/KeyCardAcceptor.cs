@@ -7,7 +7,7 @@ public class KeyCardAcceptor : MonoBehaviour
 
     public event Action<Transform> OnCollide = t => { };
 
-    public void Collission(Transform obj)
+    public void Collisssssssssssssssssion(Transform obj)
     {
         OnCollide(obj);
     }
