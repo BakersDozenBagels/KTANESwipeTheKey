@@ -142,9 +142,20 @@ public class SwipeTheKeyScript : MonoBehaviour
         MonoBehaviour room = (MonoBehaviour)FindObjectOfType(ReflectionHelper.FindTypeInGame("GameplayRoom"));
         Transform[] modholdables = FindObjectsOfType(ReflectionHelper.FindTypeInGame("ModHoldable")).Cast<MonoBehaviour>().Select(m => m.transform).ToArray();
         IList spawns = room.GetType().Field<IList>("HoldableSpawnPoints", room);
-        MonoBehaviour hsp = spawns.Cast<MonoBehaviour>().First(hspt => !modholdables.Any(tr => (tr.position - hspt.transform.position).magnitude < 0.01f));
-        GameObject mho = Instantiate(folder.gameObject, hsp.transform.position, hsp.transform.rotation);
+        MonoBehaviour hsp = spawns.Cast<MonoBehaviour>().FirstOrDefault(hspt => !modholdables.Any(tr => (tr.position - hspt.transform.position).magnitude < 0.01f));
         Type mht = ReflectionHelper.FindTypeInGame("ModHoldable");
+        bool flag;
+        if(flag = hsp == null)
+        {
+            GameObject sp = Instantiate(((MonoBehaviour)spawns[spawns.Count - 1]).gameObject);
+            Component origh = ((MonoBehaviour)spawns[spawns.Count - 1]);
+            object target = origh.GetType().Field<object>("HoldableTarget", origh);
+
+            //sp.transform.position += new Vector3(1f, 0f, 0f);
+            hsp = (MonoBehaviour)sp.GetComponent(ReflectionHelper.FindTypeInGame("HoldableSpawnPoint"));
+            hsp.GetType().SetField("HoldableTarget", hsp, target);
+        }
+        GameObject mho = Instantiate(folder.gameObject, hsp.transform.position, hsp.transform.rotation);
         Component mh;
 
         Type mselt = ReflectionHelper.FindTypeInGame("ModSelectable");
@@ -159,8 +170,19 @@ public class SwipeTheKeyScript : MonoBehaviour
         mh.transform.parent = room.transform;
         mh.transform.localScale = Vector3.one;
         mh.GetType().SetField("HoldableTarget", mh, hsp.GetType().Field<object>("HoldableTarget", hsp));
-        int ix = selt.Field<int>("ChildRowLength", room.GetComponent(selt)) * hsp.GetType().Field<int>("SelectableIndexY", hsp) + hsp.GetType().Field<int>("SelectableIndexX", hsp);
-        selt.Field<IList>("Children", room.GetComponent(selt))[ix] = mh.GetComponent(selt);
+        if(flag)
+        {
+            IList initarray = selt.Field<IList>("Children", room.GetComponent(selt));
+            IList arraygarbage = (IList)Activator.CreateInstance(selt.MakeArrayType(), initarray.Count + 1);
+            Array.Copy((Array)initarray, (Array)arraygarbage, initarray.Count);
+            arraygarbage[initarray.Count] = mh.GetComponent(selt);
+            selt.SetField("Children", room.GetComponent(selt), arraygarbage);
+        }
+        else
+        {
+            int ix = selt.Field<int>("ChildRowLength", room.GetComponent(selt)) * hsp.GetType().Field<int>("SelectableIndexY", hsp) + hsp.GetType().Field<int>("SelectableIndexX", hsp);
+            selt.Field<IList>("Children", room.GetComponent(selt))[ix] = mh.GetComponent(selt);
+        }
 
         object arr = Array.CreateInstance(ReflectionHelper.FindTypeInGame("Assets.Scripts.Input.FaceSelectable"), 0);
         mht.SetField("Faces", mh, arr);
